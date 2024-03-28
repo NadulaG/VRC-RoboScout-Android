@@ -333,7 +333,7 @@ class RoboScoutAPI {
             it.clear()
         }
 
-        var seasons_data : List<JsonObject> = roboteventsRequest("/seasons/")
+        val seasons_data : List<JsonObject> = roboteventsRequest("/seasons/")
 
         for (season_data in seasons_data) {
             val season_id = season_data.get("id")
@@ -345,11 +345,10 @@ class RoboScoutAPI {
             if (gradeLevelIndex != -1) {
                 this.seasonIdMap[gradeLevelIndex][season_id.toString().toInt()] = season_name.toString()
             }
-
-            println(seasonIdMap)
         }
 
-        println("Generated session ID map")
+        this.generatedSeasonIDMap = true
+        println("Generated season ID map")
     }
 }
 
