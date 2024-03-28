@@ -1,27 +1,38 @@
 package com.sunkensplashstudios.VRCRoboScout
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -29,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +57,18 @@ import com.sunkensplashstudios.VRCRoboScout.ui.theme.*
 
 import io.mhssn.colorpicker.ColorPickerDialog
 import io.mhssn.colorpicker.ColorPickerType
+
+var selectedIndex by mutableStateOf(0)
+val competitions = listOf("VRC MS", "VRC HS", "VEX U")
+
+val seasons: List<String> = if (selectedIndex == 0 || selectedIndex == 1) {
+    API.seasonIdMap[0].values.toList()
+} else {
+    API.seasonIdMap[1].values.toList()
+}
+//val seasons = listOf("Over under", "Spin up", "Tipping point", "tt", "ttt")
+var expanded by mutableStateOf(false)
+var text by mutableStateOf(seasons[0])
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Destination
@@ -68,7 +92,82 @@ fun SettingsView(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(10.dp))
             Column(
-                modifier = Modifier.fillMaxSize().padding(padding)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            ) {
+                Text(
+                    "COMPETITION",
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
+                Card(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
+                    colors = CardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.5f),
+                        disabledContainerColor = Color.Unspecified.copy(alpha = 0.5f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        disabledContentColor = Color.Unspecified
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        SingleChoiceSegmentedButtonRow {
+                            competitions.forEachIndexed { index, label ->
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(
+                                        index = index,
+                                        count = competitions.size
+                                    ),
+                                    onClick = { selectedIndex = index },
+                                    selected = index == selectedIndex,
+                                    modifier = Modifier.width(120.dp)
+                                ) {
+                                    Text(label)
+                                }
+                            }
+                        }
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = it },
+                        ) {
+                            TextField(
+                                // The `menuAnchor` modifier must be passed to the text field for correctness.
+                                modifier = Modifier.menuAnchor(),
+                                value = text,
+                                onValueChange = {},
+                                readOnly = true,
+                                singleLine = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false },
+                            ) {
+                                seasons.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option, style = MaterialTheme.typography.bodyLarge) },
+                                        onClick = {
+                                            text = option
+                                            expanded = false
+                                        },
+                                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
             ) {
                 Text(
                     "APPEARANCE",
@@ -277,7 +376,9 @@ fun SettingsView(navController: NavController) {
                             Text("Minimalistic", modifier = Modifier.weight(1f))
                             Switch(
                                 checked = minimalistic,
-                                modifier = Modifier.size(44.dp, 24.dp).padding(end = 10.dp),
+                                modifier = Modifier
+                                    .size(44.dp, 24.dp)
+                                    .padding(end = 10.dp),
                                 onCheckedChange = {
                                     minimalistic = it
                                     userSettings.setMinimalisticMode(it)

@@ -269,6 +269,11 @@ class RootActivity : ComponentActivity() {
                         API.updateVDACache()
                     }
                 }
+                if (!API.generatedSeasonIDMap) {
+                    CoroutineScope(Dispatchers.Default).launch {
+                        API.generateSeasonIDMap()
+                    }
+                }
             }
 
             // setting up the individual tabs

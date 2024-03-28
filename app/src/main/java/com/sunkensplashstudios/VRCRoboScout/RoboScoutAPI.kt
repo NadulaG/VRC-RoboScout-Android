@@ -11,12 +11,15 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.json.JSONArray
+import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -152,6 +155,12 @@ class RoboScoutAPI {
     var regionsMap: MutableMap<String, Int> = mutableMapOf<String, Int>()
     var importedWS: Boolean = false
     var importedVDA: Boolean = false
+    var generatedSeasonIDMap: Boolean = false
+//    var seasonIDMap: MutableList<Season> = mutableListOf<Season>()
+    val seasonIdMap: List<LinkedHashMap<Int, String>> = listOf(
+        linkedMapOf(),
+        linkedMapOf()
+    )
 
     companion object {
 
@@ -318,7 +327,30 @@ class RoboScoutAPI {
             VDAEntry()
         }
     }
+    
+    suspend fun generateSeasonIDMap() {
+        this.seasonIdMap.forEach {
+            it.clear()
+        }
 
+        var seasons_data : List<JsonObject> = roboteventsRequest("/seasons/")
+
+        for (season_data in seasons_data) {
+            val season_id = season_data.get("id")
+            val season_name = season_data.get("name")
+            val program = season_data.get("program")?.jsonObject
+            val program_id = program?.get("id")?.jsonPrimitive?.int
+            val gradeLevelIndex = if (program_id == 1) 0 else if (program_id == 4) 1 else -1
+
+            if (gradeLevelIndex != -1) {
+                this.seasonIdMap[gradeLevelIndex][season_id.toString().toInt()] = season_name.toString()
+            }
+
+            println(seasonIdMap)
+        }
+
+        println("Generated session ID map")
+    }
 }
 
 @Serializable
